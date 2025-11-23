@@ -1,0 +1,18 @@
+# hago configuration file
+# Copy this file to ~/.hago.yaml or ./.hago.yaml and fill in your values
+
+# Home Assistant URL (required)
+url: "http://homeassistant.local:8123"
+
+# Long-Lived Access Token (required)
+# Generate at: http://your-ha-instance:8123/profile -> Long-Lived Access Tokens
+token: "your-long-lived-access-token"
+
+# Request timeout (optional, default: 30s)
+timeout: 30s
+
+# Log level: debug, info, warn, error (optional, default: info)
+log_level: info
+
+# Log format: text, json (optional, default: text)
+log_format: text

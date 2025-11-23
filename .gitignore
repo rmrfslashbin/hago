@@ -36,6 +36,9 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Config files with secrets
+.hago.yaml
+
 # Build
 dist/
 build/

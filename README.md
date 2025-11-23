@@ -87,21 +87,39 @@ func main() {
 
 ## CLI Usage
 
-The `hago` CLI provides a command-line interface for testing and interacting with Home Assistant.
+The `hago` CLI provides a command-line interface for testing and interacting with Home Assistant. It uses [Cobra](https://github.com/spf13/cobra) for subcommands and [Viper](https://github.com/spf13/viper) for configuration.
 
 ### Configuration
 
-Set your Home Assistant URL and token via environment variables or flags:
+Configuration can be provided via (in order of precedence):
+
+1. Command-line flags
+2. Environment variables (`HAGO_URL`, `HAGO_TOKEN`, etc.)
+3. Config file (`~/.hago.yaml` or `./.hago.yaml`)
+4. `.env` file in current directory
+
+#### Environment Variables
 
 ```bash
 export HAGO_URL="http://homeassistant.local:8123"
 export HAGO_TOKEN="your-long-lived-access-token"
 ```
 
-Or use flags:
+#### Config File (~/.hago.yaml)
+
+```yaml
+url: "http://homeassistant.local:8123"
+token: "your-long-lived-access-token"
+timeout: 30s
+log_level: info
+log_format: text
+```
+
+#### .env File
 
 ```bash
-hago -url "http://homeassistant.local:8123" -token "your-token" status
+HAGO_URL=http://homeassistant.local:8123
+HAGO_TOKEN=your-long-lived-access-token
 ```
 
 ### Commands
@@ -112,61 +130,66 @@ hago status
 
 # Get Home Assistant configuration
 hago config
+hago config check  # Validate configuration.yaml
 
 # List loaded components
 hago components
 
-# List all entity states
-hago states
+# Entity states
+hago state list                           # List all entities
+hago state get light.living_room          # Get specific entity
+hago state set sensor.test 42             # Set entity state
+hago state set sensor.test 42 --attr '{"unit": "celsius"}'
+hago state delete sensor.test             # Delete entity
 
-# Get state of a specific entity
-hago state light.living_room
+# Services
+hago service list                         # List all services
+hago service call light turn_on light.living_room
+hago service call light turn_on light.living_room -d '{"brightness": 255}'
 
-# List available services
-hago services
+# Events
+hago event list                           # List event types
+hago event fire my_event -d '{"key": "value"}'
 
-# Call a service
-hago call light turn_on light.living_room
-hago call light turn_on light.living_room '{"brightness": 255}'
+# History
+hago history light.living_room            # Last 24 hours
+hago history light.living_room -d 48h     # Last 48 hours
+hago history sensor.temp -d 7d --minimal  # 7 days, minimal response
 
-# List event types
-hago events
+# Logbook
+hago logbook                              # Last 24 hours
+hago logbook -d 12h                       # Last 12 hours
+hago logbook -e light.living_room         # Filter by entity
 
-# Fire an event
-hago fire custom_event '{"key": "value"}'
-
-# Get state history (default: last 24 hours)
-hago history light.living_room
-hago history light.living_room 48h
-
-# Get logbook entries
-hago logbook
-hago logbook 12h
-
-# Get error log
+# Error log
 hago errorlog
 
-# Render a Jinja2 template
+# Templates
 hago template "{{ states('light.living_room') }}"
+hago template "{{ now().strftime('%Y-%m-%d') }}"
 
-# List calendars
-hago calendars
+# Calendars
+hago calendar list                        # List all calendars
+hago calendar events calendar.personal    # Next 7 days
+hago calendar events calendar.work -d 14  # Next 14 days
 
-# Get calendar events (default: next 7 days)
-hago calendar calendar.personal
-hago calendar calendar.personal 14
+# Shell completion
+hago completion bash > /etc/bash_completion.d/hago
+hago completion zsh > "${fpath[1]}/_hago"
+hago completion fish > ~/.config/fish/completions/hago.fish
 ```
 
-### Flags
+### Global Flags
 
 | Flag | Environment | Description |
 |------|-------------|-------------|
-| `-url` | `HAGO_URL` | Home Assistant URL |
-| `-token` | `HAGO_TOKEN` | Long-Lived Access Token |
-| `-timeout` | - | Request timeout (default: 30s) |
-| `-log-level` | `HAGO_LOG_LEVEL` | Log level: debug, info, warn, error |
-| `-log-format` | `HAGO_LOG_FORMAT` | Log format: text, json |
-| `-version` | - | Print version information |
+| `--url` | `HAGO_URL` | Home Assistant URL |
+| `--token` | `HAGO_TOKEN` | Long-Lived Access Token |
+| `--timeout` | `HAGO_TIMEOUT` | Request timeout (default: 30s) |
+| `--log-level` | `HAGO_LOG_LEVEL` | Log level: debug, info, warn, error |
+| `--log-format` | `HAGO_LOG_FORMAT` | Log format: text, json |
+| `--output`, `-o` | - | Output format: json, pretty |
+| `--config` | - | Config file path |
 
 ## Features
 
@@ -175,7 +198,8 @@ hago calendar calendar.personal 14
 - Context support for cancellation and timeouts
 - Strongly typed requests and responses
 - Thread-safe client
-- Reference CLI for testing
+- CLI with Cobra/Viper for easy configuration
+- Multiple config sources: flags, env vars, config files, .env
 
 ## API Coverage
 
