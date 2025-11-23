@@ -1,0 +1,45 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of go coverage
+coverage.*
+*.out
+
+# Vendor directory (if not committing deps)
+# vendor/
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE/Editor
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build
+dist/
+build/
+
+# Debug
+debug
+*.log
