@@ -191,9 +191,74 @@ hago completion fish > ~/.config/fish/completions/hago.fish
 | `--output`, `-o` | - | Output format: json, pretty |
 | `--config` | - | Config file path |
 
+## Lovelace Dashboard Management
+
+The library includes WebSocket API support for Lovelace dashboard management, enabling dashboard-as-code workflows.
+
+### Library Usage
+
+```go
+// List all dashboards
+dashboards, err := client.LovelaceListDashboards(ctx)
+
+// Get dashboard configuration
+config, err := client.LovelaceGetConfig(ctx, nil, false)  // default dashboard
+config, err := client.LovelaceGetConfig(ctx, ptr("map"), false)  // specific dashboard
+
+// Save dashboard configuration
+err := client.LovelaceSaveConfig(ctx, nil, myConfig)
+
+// Create a new dashboard
+dashboard, err := client.LovelaceCreateDashboard(ctx, &hago.CreateDashboardRequest{
+    URLPath: "my-dashboard",
+    Title:   "My Dashboard",
+    Icon:    "mdi:view-dashboard",
+})
+
+// List custom resources (cards, themes)
+resources, err := client.LovelaceListResources(ctx)
+
+// Close WebSocket when done (optional - auto-closes on program exit)
+client.CloseWebSocket()
+```
+
+### CLI Usage
+
+```bash
+# List all dashboards
+hago lovelace list
+
+# Get dashboard configuration
+hago lovelace get                    # default dashboard
+hago lovelace get map                # specific dashboard
+hago lovelace get --yaml > dash.yaml # export as YAML
+
+# Save dashboard configuration
+hago lovelace save -f dashboard.yaml
+hago lovelace save map -f map.json
+cat config.json | hago lovelace save
+
+# Export all dashboards
+hago lovelace export -o ./dashboards
+hago lovelace export -o ./dashboards --yaml
+
+# Create a new dashboard
+hago lovelace create my-dash --title "My Dashboard" --icon mdi:home
+
+# Delete dashboard configuration (reset to auto-gen)
+hago lovelace delete map
+
+# Remove dashboard entirely
+hago lovelace remove-dashboard my-dash
+
+# List custom resources
+hago lovelace resources
+```
+
 ## Features
 
 - Full Home Assistant REST API coverage
+- WebSocket API for Lovelace dashboard management
 - Functional options pattern for configuration
 - Context support for cancellation and timeouts
 - Strongly typed requests and responses
@@ -203,6 +268,7 @@ hago completion fish > ~/.config/fish/completions/hago.fish
 
 ## API Coverage
 
+### REST API
 - [x] Core endpoints (`/api/`, `/api/config`, `/api/components`)
 - [x] State management (`/api/states` - GET, POST, DELETE)
 - [x] Service calls (`/api/services`)
@@ -213,6 +279,16 @@ hago completion fish > ~/.config/fish/completions/hago.fish
 - [x] Template rendering (`/api/template`)
 - [x] Configuration check (`/api/config/core/check_config`)
 - [x] Intent handling (`/api/intent/handle`)
+
+### WebSocket API
+- [x] Lovelace dashboard list (`lovelace/dashboards/list`)
+- [x] Lovelace config get (`lovelace/config`)
+- [x] Lovelace config save (`lovelace/config/save`)
+- [x] Lovelace config delete (`lovelace/config/delete`)
+- [x] Lovelace dashboard create (`lovelace/dashboards/create`)
+- [x] Lovelace dashboard update (`lovelace/dashboards/update`)
+- [x] Lovelace dashboard delete (`lovelace/dashboards/delete`)
+- [x] Lovelace resources list (`lovelace/resources`)
 
 ## Contributing
 

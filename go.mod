@@ -3,9 +3,11 @@ module github.com/rmrfslashbin/hago
 go 1.25.4
 
 require (
+	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

@@ -194,3 +194,8 @@ func setupLogger(level, format string) (*slog.Logger, error) {
 func getClient() *hago.Client {
 	return client
 }
+
+// getLogger returns the initialized logger.
+func getLogger() *slog.Logger {
+	return logger
+}

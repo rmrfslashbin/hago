@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -18,6 +19,10 @@ type Client struct {
 	baseURL    string
 	token      string
 	httpClient *http.Client
+
+	// WebSocket connection (lazy initialized)
+	ws   *wsConn
+	wsMu sync.Mutex
 }
 
 // Option is a functional option for configuring the Client.
