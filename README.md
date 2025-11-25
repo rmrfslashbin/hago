@@ -103,6 +103,46 @@ err = client.AutomationToggle(ctx, "automation.front_door_lock")
 err = client.AutomationReload(ctx)
 ```
 
+### Automation Configuration (Undocumented API)
+
+**WARNING:** These methods use an undocumented Home Assistant REST API endpoint (`/api/config/automation/config/`) that is subject to change without notice. This endpoint is used internally by the Home Assistant UI but is not officially documented. Use at your own risk and expect potential breaking changes in future Home Assistant versions.
+
+```go
+// List all automation configurations
+configs, err := client.AutomationList(ctx)
+for _, config := range configs {
+    fmt.Printf("%s: %s\n", config.ID, config.Alias)
+}
+
+// Get a specific automation configuration
+config, err := client.AutomationGet(ctx, "my_automation")
+
+// Save (create or update) an automation configuration
+newConfig := &hago.AutomationConfig{
+    ID:    "my_automation",
+    Alias: "My Automation",
+    Trigger: []any{
+        map[string]any{
+            "platform": "state",
+            "entity_id": "binary_sensor.front_door",
+            "to":       "on",
+        },
+    },
+    Action: []any{
+        map[string]any{
+            "service": "light.turn_on",
+            "target": map[string]any{
+                "entity_id": "light.front_porch",
+            },
+        },
+    },
+}
+err = client.AutomationSave(ctx, newConfig)
+
+// Delete an automation configuration
+err = client.AutomationDeleteConfig(ctx, "my_automation")
+```
+
 ## CLI Usage
 
 The `hago` CLI provides a command-line interface for testing and interacting with Home Assistant. It uses [Cobra](https://github.com/spf13/cobra) for subcommands and [Viper](https://github.com/spf13/viper) for configuration.
@@ -186,13 +226,20 @@ hago errorlog
 hago template "{{ states('light.living_room') }}"
 hago template "{{ now().strftime('%Y-%m-%d') }}"
 
-# Automations
+# Automations - Service Control
 hago automation trigger automation.front_door_lock          # Trigger automation
 hago automation trigger automation.lights_on --skip-condition  # Skip conditions
 hago automation turn-on automation.front_door_lock          # Enable automation
 hago automation turn-off automation.front_door_lock         # Disable automation
 hago automation toggle automation.front_door_lock           # Toggle state
 hago automation reload                                      # Reload from YAML
+
+# Automations - Configuration Management (Undocumented API)
+hago automation list                                        # List all configs
+hago automation get my_automation                           # Get config by ID
+hago automation get my_automation --yaml > config.yaml      # Export as YAML
+hago automation save my_automation -f config.yaml           # Save from file
+hago automation delete-config my_automation                 # Delete config
 
 # Calendars
 hago calendar list                        # List all calendars
@@ -407,6 +454,11 @@ hago registry devices -o json | jq '.[] | select(.manufacturer=="Philips")'
   - Enable/disable automation
   - Toggle automation
   - Reload automations
+- [x] Automation configuration (`/api/config/automation/config/*`) **⚠️ Undocumented API**
+  - List automations
+  - Get automation config
+  - Save (create/update) automation
+  - Delete automation config
 
 ### WebSocket API
 - [x] Lovelace dashboard list (`lovelace/dashboards/list`)

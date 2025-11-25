@@ -1,8 +1,14 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+
 	"github.com/rmrfslashbin/hago"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 var automationCmd = &cobra.Command{
@@ -131,6 +137,141 @@ Examples:
 	},
 }
 
+var automationListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all automation configurations",
+	Long: `List all automation configurations from Home Assistant.
+
+WARNING: This uses an undocumented REST API endpoint that may change without notice.
+
+Examples:
+  hago automation list
+  hago automation list -o json`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		configs, err := getClient().AutomationList(ctx)
+		if err != nil {
+			return err
+		}
+
+		return printResult(configs)
+	},
+}
+
+var automationGetCmd = &cobra.Command{
+	Use:   "get <id>",
+	Short: "Get automation configuration by ID",
+	Long: `Get a specific automation configuration by its ID.
+
+WARNING: This uses an undocumented REST API endpoint that may change without notice.
+
+Examples:
+  hago automation get my_automation
+  hago automation get my_automation -o json
+  hago automation get my_automation --yaml > automation.yaml`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		config, err := getClient().AutomationGet(ctx, args[0])
+		if err != nil {
+			return err
+		}
+
+		asYAML, _ := cmd.Flags().GetBool("yaml")
+		if asYAML {
+			return yaml.NewEncoder(os.Stdout).Encode(config)
+		}
+
+		return printResult(config)
+	},
+}
+
+var automationSaveCmd = &cobra.Command{
+	Use:   "save <id>",
+	Short: "Save automation configuration",
+	Long: `Save (create or update) an automation configuration.
+
+WARNING: This uses an undocumented REST API endpoint that may change without notice.
+
+The configuration can be provided via file (-f) or stdin. It must be JSON or YAML
+containing the full automation configuration including id, alias, trigger, and action.
+
+Examples:
+  hago automation save my_automation -f automation.yaml
+  hago automation save my_automation -f automation.json
+  cat automation.yaml | hago automation save my_automation`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+		file, _ := cmd.Flags().GetString("file")
+
+		// Read config from file or stdin
+		var data []byte
+		var err error
+
+		if file != "" {
+			data, err = os.ReadFile(file)
+			if err != nil {
+				return fmt.Errorf("read file: %w", err)
+			}
+		} else {
+			// Read from stdin
+			data, err = io.ReadAll(os.Stdin)
+			if err != nil {
+				return fmt.Errorf("read stdin: %w", err)
+			}
+		}
+
+		if len(data) == 0 {
+			return fmt.Errorf("no configuration provided (use --file or pipe to stdin)")
+		}
+
+		// Parse as JSON or YAML
+		var config hago.AutomationConfig
+		if err := json.Unmarshal(data, &config); err != nil {
+			// Try YAML
+			if err := yaml.Unmarshal(data, &config); err != nil {
+				return fmt.Errorf("parse config (tried JSON and YAML): %w", err)
+			}
+		}
+
+		// Ensure ID matches argument
+		config.ID = args[0]
+
+		if err := getClient().AutomationSave(ctx, &config); err != nil {
+			return err
+		}
+
+		printSuccess("Automation configuration '%s' saved", args[0])
+		return nil
+	},
+}
+
+var automationDeleteConfigCmd = &cobra.Command{
+	Use:   "delete-config <id>",
+	Short: "Delete automation configuration",
+	Long: `Delete an automation configuration by ID.
+
+WARNING: This uses an undocumented REST API endpoint that may change without notice.
+This removes the automation configuration entirely.
+
+Examples:
+  hago automation delete-config my_automation`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		if err := getClient().AutomationDeleteConfig(ctx, args[0]); err != nil {
+			return err
+		}
+
+		printSuccess("Automation configuration '%s' deleted", args[0])
+		return nil
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(automationCmd)
 
@@ -139,7 +280,17 @@ func init() {
 	automationCmd.AddCommand(automationTurnOffCmd)
 	automationCmd.AddCommand(automationToggleCmd)
 	automationCmd.AddCommand(automationReloadCmd)
+	automationCmd.AddCommand(automationListCmd)
+	automationCmd.AddCommand(automationGetCmd)
+	automationCmd.AddCommand(automationSaveCmd)
+	automationCmd.AddCommand(automationDeleteConfigCmd)
 
 	// Trigger flags
 	automationTriggerCmd.Flags().Bool("skip-condition", false, "Skip automation conditions when triggering")
+
+	// Get flags
+	automationGetCmd.Flags().Bool("yaml", false, "Output as YAML")
+
+	// Save flags
+	automationSaveCmd.Flags().StringP("file", "f", "", "File containing automation configuration (JSON or YAML)")
 }
