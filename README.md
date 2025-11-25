@@ -257,7 +257,7 @@ hago lovelace resources
 
 ## Registry API
 
-The library provides access to Home Assistant's registry APIs for querying metadata about entities, devices, areas, labels, and floors. This metadata isn't available through the state API and is essential for organization and understanding entity relationships.
+The library provides access to Home Assistant's registry APIs via WebSocket for querying metadata about entities, devices, areas, labels, and floors. This metadata isn't available through the state API and is essential for organization and understanding entity relationships.
 
 ### Library Usage
 
@@ -375,12 +375,6 @@ hago registry devices -o json | jq '.[] | select(.manufacturer=="Philips")'
 - [x] Template rendering (`/api/template`)
 - [x] Configuration check (`/api/config/core/check_config`)
 - [x] Intent handling (`/api/intent/handle`)
-- [x] Registry APIs (`/api/config/*_registry/list`)
-  - Entity Registry
-  - Device Registry
-  - Area Registry
-  - Label Registry
-  - Floor Registry
 
 ### WebSocket API
 - [x] Lovelace dashboard list (`lovelace/dashboards/list`)
@@ -391,6 +385,12 @@ hago registry devices -o json | jq '.[] | select(.manufacturer=="Philips")'
 - [x] Lovelace dashboard update (`lovelace/dashboards/update`)
 - [x] Lovelace dashboard delete (`lovelace/dashboards/delete`)
 - [x] Lovelace resources list (`lovelace/resources`)
+- [x] Registry APIs (`config/*_registry/list`)
+  - Entity Registry
+  - Device Registry
+  - Area Registry
+  - Label Registry
+  - Floor Registry
 
 ## Contributing
 
