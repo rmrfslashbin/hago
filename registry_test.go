@@ -2,53 +2,69 @@ package hago
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/websocket"
 )
 
 func TestClient_EntityRegistry(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/config/entity_registry/list" {
-			t.Errorf("unexpected path: %s", r.URL.Path)
-		}
-		if r.Header.Get("Authorization") != "Bearer test-token" {
-			t.Error("missing or invalid authorization header")
+	server := mockWSServer(t, func(conn *websocket.Conn) {
+		// Auth flow
+		conn.WriteJSON(map[string]any{"type": "auth_required"})
+		var auth map[string]any
+		conn.ReadJSON(&auth)
+		conn.WriteJSON(map[string]any{"type": "auth_ok"})
+
+		// Read command
+		var cmd map[string]any
+		if err := conn.ReadJSON(&cmd); err != nil {
+			t.Errorf("read command: %v", err)
+			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[
-			{
-				"entity_id": "light.living_room",
-				"name": "Living Room Light",
-				"area_id": "living_room",
-				"device_id": "device123",
-				"labels": ["smart", "lighting"],
-				"icon": "mdi:lightbulb",
-				"disabled_by": null,
-				"hidden_by": null,
-				"has_entity_name": true,
-				"platform": "hue",
-				"unique_id": "hue-001"
+		if cmd["type"] != "config/entity_registry/list" {
+			t.Errorf("expected config/entity_registry/list, got %v", cmd["type"])
+		}
+
+		// Send response
+		conn.WriteJSON(map[string]any{
+			"id":      cmd["id"],
+			"type":    "result",
+			"success": true,
+			"result": []map[string]any{
+				{
+					"entity_id":       "light.living_room",
+					"name":            "Living Room Light",
+					"area_id":         "living_room",
+					"device_id":       "device123",
+					"labels":          []string{"smart", "lighting"},
+					"icon":            "mdi:lightbulb",
+					"disabled_by":     nil,
+					"hidden_by":       nil,
+					"has_entity_name": true,
+					"platform":        "hue",
+					"unique_id":       "hue-001",
+				},
+				{
+					"entity_id":       "sensor.temperature",
+					"name":            nil,
+					"area_id":         nil,
+					"device_id":       "device456",
+					"labels":          []string{},
+					"icon":            nil,
+					"disabled_by":     nil,
+					"hidden_by":       nil,
+					"has_entity_name": false,
+					"platform":        "mqtt",
+					"unique_id":       "mqtt-temp-001",
+				},
 			},
-			{
-				"entity_id": "sensor.temperature",
-				"name": null,
-				"area_id": null,
-				"device_id": "device456",
-				"labels": [],
-				"icon": null,
-				"disabled_by": null,
-				"hidden_by": null,
-				"has_entity_name": false,
-				"platform": "mqtt",
-				"unique_id": "mqtt-temp-001"
-			}
-		]`))
-	}))
+		})
+	})
 	defer server.Close()
 
 	client, _ := New(WithBaseURL(server.URL), WithToken("test-token"))
+	defer client.CloseWebSocket()
 	ctx := context.Background()
 
 	entries, err := client.EntityRegistry(ctx)
@@ -75,37 +91,53 @@ func TestClient_EntityRegistry(t *testing.T) {
 }
 
 func TestClient_DeviceRegistry(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/config/device_registry/list" {
-			t.Errorf("unexpected path: %s", r.URL.Path)
+	server := mockWSServer(t, func(conn *websocket.Conn) {
+		// Auth flow
+		conn.WriteJSON(map[string]any{"type": "auth_required"})
+		var auth map[string]any
+		conn.ReadJSON(&auth)
+		conn.WriteJSON(map[string]any{"type": "auth_ok"})
+
+		// Read command
+		var cmd map[string]any
+		conn.ReadJSON(&cmd)
+
+		if cmd["type"] != "config/device_registry/list" {
+			t.Errorf("expected config/device_registry/list, got %v", cmd["type"])
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[
-			{
-				"id": "device123",
-				"name": "Philips Hue Bridge",
-				"area_id": "office",
-				"config_entries": ["config1"],
-				"connections": [["mac", "00:11:22:33:44:55"]],
-				"disabled_by": null,
-				"identifiers": [["hue", "bridge001"]],
-				"manufacturer": "Philips",
-				"model": "BSB002",
-				"name_by_user": "Hue Bridge Office",
-				"sw_version": "1.2.3",
-				"hw_version": "2.1",
-				"serial_number": "ABC123",
-				"via_device_id": null,
-				"configuration_url": "http://192.168.1.100",
-				"entry_type": "service",
-				"labels": ["bridge"]
-			}
-		]`))
-	}))
+		// Send response
+		conn.WriteJSON(map[string]any{
+			"id":      cmd["id"],
+			"type":    "result",
+			"success": true,
+			"result": []map[string]any{
+				{
+					"id":                "device123",
+					"name":              "Philips Hue Bridge",
+					"area_id":           "office",
+					"config_entries":    []string{"config1"},
+					"connections":       [][]string{{"mac", "00:11:22:33:44:55"}},
+					"disabled_by":       nil,
+					"identifiers":       [][]string{{"hue", "bridge001"}},
+					"manufacturer":      "Philips",
+					"model":             "BSB002",
+					"name_by_user":      "Hue Bridge Office",
+					"sw_version":        "1.2.3",
+					"hw_version":        "2.1",
+					"serial_number":     "ABC123",
+					"via_device_id":     nil,
+					"configuration_url": "http://192.168.1.100",
+					"entry_type":        "service",
+					"labels":            []string{"bridge"},
+				},
+			},
+		})
+	})
 	defer server.Close()
 
 	client, _ := New(WithBaseURL(server.URL), WithToken("test-token"))
+	defer client.CloseWebSocket()
 	ctx := context.Background()
 
 	entries, err := client.DeviceRegistry(ctx)
@@ -129,27 +161,43 @@ func TestClient_DeviceRegistry(t *testing.T) {
 }
 
 func TestClient_AreaRegistry(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/config/area_registry/list" {
-			t.Errorf("unexpected path: %s", r.URL.Path)
+	server := mockWSServer(t, func(conn *websocket.Conn) {
+		// Auth flow
+		conn.WriteJSON(map[string]any{"type": "auth_required"})
+		var auth map[string]any
+		conn.ReadJSON(&auth)
+		conn.WriteJSON(map[string]any{"type": "auth_ok"})
+
+		// Read command
+		var cmd map[string]any
+		conn.ReadJSON(&cmd)
+
+		if cmd["type"] != "config/area_registry/list" {
+			t.Errorf("expected config/area_registry/list, got %v", cmd["type"])
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[
-			{
-				"area_id": "living_room",
-				"name": "Living Room",
-				"floor_id": "ground_floor",
-				"icon": "mdi:sofa",
-				"picture": "/local/living_room.jpg",
-				"aliases": ["lounge", "family room"],
-				"labels": ["main"]
-			}
-		]`))
-	}))
+		// Send response
+		conn.WriteJSON(map[string]any{
+			"id":      cmd["id"],
+			"type":    "result",
+			"success": true,
+			"result": []map[string]any{
+				{
+					"area_id":  "living_room",
+					"name":     "Living Room",
+					"floor_id": "ground_floor",
+					"icon":     "mdi:sofa",
+					"picture":  "/local/living_room.jpg",
+					"aliases":  []string{"lounge", "family room"},
+					"labels":   []string{"main"},
+				},
+			},
+		})
+	})
 	defer server.Close()
 
 	client, _ := New(WithBaseURL(server.URL), WithToken("test-token"))
+	defer client.CloseWebSocket()
 	ctx := context.Background()
 
 	entries, err := client.AreaRegistry(ctx)
@@ -173,25 +221,41 @@ func TestClient_AreaRegistry(t *testing.T) {
 }
 
 func TestClient_LabelRegistry(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/config/label_registry/list" {
-			t.Errorf("unexpected path: %s", r.URL.Path)
+	server := mockWSServer(t, func(conn *websocket.Conn) {
+		// Auth flow
+		conn.WriteJSON(map[string]any{"type": "auth_required"})
+		var auth map[string]any
+		conn.ReadJSON(&auth)
+		conn.WriteJSON(map[string]any{"type": "auth_ok"})
+
+		// Read command
+		var cmd map[string]any
+		conn.ReadJSON(&cmd)
+
+		if cmd["type"] != "config/label_registry/list" {
+			t.Errorf("expected config/label_registry/list, got %v", cmd["type"])
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[
-			{
-				"label_id": "security",
-				"name": "Security",
-				"icon": "mdi:shield",
-				"color": "#FF0000",
-				"description": "Security-related devices"
-			}
-		]`))
-	}))
+		// Send response
+		conn.WriteJSON(map[string]any{
+			"id":      cmd["id"],
+			"type":    "result",
+			"success": true,
+			"result": []map[string]any{
+				{
+					"label_id":    "security",
+					"name":        "Security",
+					"icon":        "mdi:shield",
+					"color":       "#FF0000",
+					"description": "Security-related devices",
+				},
+			},
+		})
+	})
 	defer server.Close()
 
 	client, _ := New(WithBaseURL(server.URL), WithToken("test-token"))
+	defer client.CloseWebSocket()
 	ctx := context.Background()
 
 	entries, err := client.LabelRegistry(ctx)
@@ -215,32 +279,48 @@ func TestClient_LabelRegistry(t *testing.T) {
 }
 
 func TestClient_FloorRegistry(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/config/floor_registry/list" {
-			t.Errorf("unexpected path: %s", r.URL.Path)
+	server := mockWSServer(t, func(conn *websocket.Conn) {
+		// Auth flow
+		conn.WriteJSON(map[string]any{"type": "auth_required"})
+		var auth map[string]any
+		conn.ReadJSON(&auth)
+		conn.WriteJSON(map[string]any{"type": "auth_ok"})
+
+		// Read command
+		var cmd map[string]any
+		conn.ReadJSON(&cmd)
+
+		if cmd["type"] != "config/floor_registry/list" {
+			t.Errorf("expected config/floor_registry/list, got %v", cmd["type"])
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[
-			{
-				"floor_id": "ground_floor",
-				"name": "Ground Floor",
-				"icon": "mdi:home",
-				"level": 0,
-				"aliases": ["first floor", "main floor"]
+		// Send response
+		conn.WriteJSON(map[string]any{
+			"id":      cmd["id"],
+			"type":    "result",
+			"success": true,
+			"result": []map[string]any{
+				{
+					"floor_id": "ground_floor",
+					"name":     "Ground Floor",
+					"icon":     "mdi:home",
+					"level":    0,
+					"aliases":  []string{"first floor", "main floor"},
+				},
+				{
+					"floor_id": "upstairs",
+					"name":     "Upstairs",
+					"icon":     "mdi:stairs-up",
+					"level":    1,
+					"aliases":  []string{"second floor"},
+				},
 			},
-			{
-				"floor_id": "upstairs",
-				"name": "Upstairs",
-				"icon": "mdi:stairs-up",
-				"level": 1,
-				"aliases": ["second floor"]
-			}
-		]`))
-	}))
+		})
+	})
 	defer server.Close()
 
 	client, _ := New(WithBaseURL(server.URL), WithToken("test-token"))
+	defer client.CloseWebSocket()
 	ctx := context.Background()
 
 	entries, err := client.FloorRegistry(ctx)
@@ -264,13 +344,32 @@ func TestClient_FloorRegistry(t *testing.T) {
 }
 
 func TestClient_EntityRegistry_Error(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"message": "Unauthorized"}`))
-	}))
+	server := mockWSServer(t, func(conn *websocket.Conn) {
+		// Auth flow
+		conn.WriteJSON(map[string]any{"type": "auth_required"})
+		var auth map[string]any
+		conn.ReadJSON(&auth)
+		conn.WriteJSON(map[string]any{"type": "auth_ok"})
+
+		// Read command
+		var cmd map[string]any
+		conn.ReadJSON(&cmd)
+
+		// Send error response
+		conn.WriteJSON(map[string]any{
+			"id":      cmd["id"],
+			"type":    "result",
+			"success": false,
+			"error": map[string]any{
+				"code":    "unauthorized",
+				"message": "Unauthorized",
+			},
+		})
+	})
 	defer server.Close()
 
 	client, _ := New(WithBaseURL(server.URL), WithToken("bad-token"))
+	defer client.CloseWebSocket()
 	ctx := context.Background()
 
 	_, err := client.EntityRegistry(ctx)

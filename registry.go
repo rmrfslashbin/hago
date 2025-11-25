@@ -75,8 +75,9 @@ type FloorRegistryEntry struct {
 
 // EntityRegistry lists all entities in the registry with metadata.
 func (c *Client) EntityRegistry(ctx context.Context) ([]EntityRegistryEntry, error) {
+	cmd := map[string]string{"type": "config/entity_registry/list"}
 	var entries []EntityRegistryEntry
-	if err := c.doJSON(ctx, "GET", "/api/config/entity_registry/list", nil, &entries); err != nil {
+	if err := c.wsCommand(ctx, cmd, &entries); err != nil {
 		return nil, fmt.Errorf("entity registry: %w", err)
 	}
 	return entries, nil
@@ -84,8 +85,9 @@ func (c *Client) EntityRegistry(ctx context.Context) ([]EntityRegistryEntry, err
 
 // DeviceRegistry lists all devices in the registry.
 func (c *Client) DeviceRegistry(ctx context.Context) ([]DeviceRegistryEntry, error) {
+	cmd := map[string]string{"type": "config/device_registry/list"}
 	var entries []DeviceRegistryEntry
-	if err := c.doJSON(ctx, "GET", "/api/config/device_registry/list", nil, &entries); err != nil {
+	if err := c.wsCommand(ctx, cmd, &entries); err != nil {
 		return nil, fmt.Errorf("device registry: %w", err)
 	}
 	return entries, nil
@@ -93,8 +95,9 @@ func (c *Client) DeviceRegistry(ctx context.Context) ([]DeviceRegistryEntry, err
 
 // AreaRegistry lists all areas in the registry.
 func (c *Client) AreaRegistry(ctx context.Context) ([]AreaRegistryEntry, error) {
+	cmd := map[string]string{"type": "config/area_registry/list"}
 	var entries []AreaRegistryEntry
-	if err := c.doJSON(ctx, "GET", "/api/config/area_registry/list", nil, &entries); err != nil {
+	if err := c.wsCommand(ctx, cmd, &entries); err != nil {
 		return nil, fmt.Errorf("area registry: %w", err)
 	}
 	return entries, nil
@@ -102,8 +105,9 @@ func (c *Client) AreaRegistry(ctx context.Context) ([]AreaRegistryEntry, error) 
 
 // LabelRegistry lists all labels in the registry.
 func (c *Client) LabelRegistry(ctx context.Context) ([]LabelRegistryEntry, error) {
+	cmd := map[string]string{"type": "config/label_registry/list"}
 	var entries []LabelRegistryEntry
-	if err := c.doJSON(ctx, "GET", "/api/config/label_registry/list", nil, &entries); err != nil {
+	if err := c.wsCommand(ctx, cmd, &entries); err != nil {
 		return nil, fmt.Errorf("label registry: %w", err)
 	}
 	return entries, nil
@@ -111,8 +115,9 @@ func (c *Client) LabelRegistry(ctx context.Context) ([]LabelRegistryEntry, error
 
 // FloorRegistry lists all floors in the registry.
 func (c *Client) FloorRegistry(ctx context.Context) ([]FloorRegistryEntry, error) {
+	cmd := map[string]string{"type": "config/floor_registry/list"}
 	var entries []FloorRegistryEntry
-	if err := c.doJSON(ctx, "GET", "/api/config/floor_registry/list", nil, &entries); err != nil {
+	if err := c.wsCommand(ctx, cmd, &entries); err != nil {
 		return nil, fmt.Errorf("floor registry: %w", err)
 	}
 	return entries, nil
