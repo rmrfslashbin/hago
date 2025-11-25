@@ -85,6 +85,24 @@ func main() {
 }
 ```
 
+### Automation Control
+
+```go
+// Trigger an automation
+err := client.AutomationTrigger(ctx, &hago.AutomationTriggerRequest{
+    EntityID:      "automation.front_door_lock",
+    SkipCondition: ptr(true), // Optional: skip conditions when triggering
+})
+
+// Enable/disable automations
+err = client.AutomationTurnOn(ctx, "automation.front_door_lock")
+err = client.AutomationTurnOff(ctx, "automation.front_door_lock")
+err = client.AutomationToggle(ctx, "automation.front_door_lock")
+
+// Reload all automations from YAML
+err = client.AutomationReload(ctx)
+```
+
 ## CLI Usage
 
 The `hago` CLI provides a command-line interface for testing and interacting with Home Assistant. It uses [Cobra](https://github.com/spf13/cobra) for subcommands and [Viper](https://github.com/spf13/viper) for configuration.
@@ -167,6 +185,14 @@ hago errorlog
 # Templates
 hago template "{{ states('light.living_room') }}"
 hago template "{{ now().strftime('%Y-%m-%d') }}"
+
+# Automations
+hago automation trigger automation.front_door_lock          # Trigger automation
+hago automation trigger automation.lights_on --skip-condition  # Skip conditions
+hago automation turn-on automation.front_door_lock          # Enable automation
+hago automation turn-off automation.front_door_lock         # Disable automation
+hago automation toggle automation.front_door_lock           # Toggle state
+hago automation reload                                      # Reload from YAML
 
 # Calendars
 hago calendar list                        # List all calendars
@@ -355,6 +381,7 @@ hago registry devices -o json | jq '.[] | select(.manufacturer=="Philips")'
 - Full Home Assistant REST API coverage
 - WebSocket API for Lovelace dashboard management
 - Registry API for entity/device/area/label/floor metadata
+- Automation service wrappers for control and management
 - Functional options pattern for configuration
 - Context support for cancellation and timeouts
 - Strongly typed requests and responses
@@ -375,6 +402,11 @@ hago registry devices -o json | jq '.[] | select(.manufacturer=="Philips")'
 - [x] Template rendering (`/api/template`)
 - [x] Configuration check (`/api/config/core/check_config`)
 - [x] Intent handling (`/api/intent/handle`)
+- [x] Automation services (`/api/services/automation/*`)
+  - Trigger automation
+  - Enable/disable automation
+  - Toggle automation
+  - Reload automations
 
 ### WebSocket API
 - [x] Lovelace dashboard list (`lovelace/dashboards/list`)
