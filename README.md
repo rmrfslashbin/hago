@@ -255,10 +255,106 @@ hago lovelace remove-dashboard my-dash
 hago lovelace resources
 ```
 
+## Registry API
+
+The library provides access to Home Assistant's registry APIs for querying metadata about entities, devices, areas, labels, and floors. This metadata isn't available through the state API and is essential for organization and understanding entity relationships.
+
+### Library Usage
+
+```go
+// Entity Registry - list all entities with metadata
+entities, err := client.EntityRegistry(ctx)
+for _, entity := range entities {
+    fmt.Printf("%s: area=%s, labels=%v\n",
+        entity.EntityID,
+        *entity.AreaID,
+        entity.Labels)
+}
+
+// Device Registry - list all devices
+devices, err := client.DeviceRegistry(ctx)
+for _, device := range devices {
+    fmt.Printf("%s: %s %s (sw: %s)\n",
+        device.Name,
+        *device.Manufacturer,
+        *device.Model,
+        *device.SWVersion)
+}
+
+// Area Registry - list all areas/rooms
+areas, err := client.AreaRegistry(ctx)
+
+// Label Registry - list user-defined labels
+labels, err := client.LabelRegistry(ctx)
+
+// Floor Registry - list building levels
+floors, err := client.FloorRegistry(ctx)
+```
+
+### CLI Usage
+
+```bash
+# List entity registry entries (with area, device, label assignments)
+hago registry entities
+
+# List device registry entries (with hardware info)
+hago registry devices
+
+# List area registry entries (rooms/locations)
+hago registry areas
+
+# List label registry entries (user-defined tags)
+hago registry labels
+
+# List floor registry entries (building levels)
+hago registry floors
+
+# Use with jq for filtering
+hago registry entities -o json | jq '.[] | select(.area_id=="living_room")'
+hago registry devices -o json | jq '.[] | select(.manufacturer=="Philips")'
+```
+
+### Registry Types
+
+**Entity Registry** provides:
+- Area assignments
+- Device associations
+- Labels and categories
+- Custom icons and names
+- Disabled/hidden status
+- Platform information
+
+**Device Registry** provides:
+- Manufacturer, model, hardware version
+- Firmware/software versions
+- Serial numbers
+- Area assignments
+- Device connections and identifiers
+- Configuration URLs
+
+**Area Registry** provides:
+- Room/location names
+- Floor assignments
+- Icons and pictures
+- Aliases (alternative names)
+- Labels
+
+**Label Registry** provides:
+- User-defined organizational tags
+- Icons and colors
+- Descriptions
+
+**Floor Registry** provides:
+- Building level names
+- Level numbers (for ordering)
+- Icons
+- Aliases
+
 ## Features
 
 - Full Home Assistant REST API coverage
 - WebSocket API for Lovelace dashboard management
+- Registry API for entity/device/area/label/floor metadata
 - Functional options pattern for configuration
 - Context support for cancellation and timeouts
 - Strongly typed requests and responses
@@ -279,6 +375,12 @@ hago lovelace resources
 - [x] Template rendering (`/api/template`)
 - [x] Configuration check (`/api/config/core/check_config`)
 - [x] Intent handling (`/api/intent/handle`)
+- [x] Registry APIs (`/api/config/*_registry/list`)
+  - Entity Registry
+  - Device Registry
+  - Area Registry
+  - Label Registry
+  - Floor Registry
 
 ### WebSocket API
 - [x] Lovelace dashboard list (`lovelace/dashboards/list`)
