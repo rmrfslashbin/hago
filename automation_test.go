@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -271,6 +272,176 @@ func TestClient_AutomationList(t *testing.T) {
 	}
 	if configs[1].Description == nil || *configs[1].Description != "Test description" {
 		t.Error("expected description 'Test description'")
+	}
+}
+
+func TestClient_AutomationList_FallbackToStates(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/config/automation/config" {
+			// Simulate 404 from config endpoint
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"message": "Resource not found"}`))
+			return
+		}
+
+		if r.URL.Path == "/api/states" {
+			// Return states with automation entities
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`[
+				{
+					"entity_id": "light.living_room",
+					"state": "on",
+					"attributes": {
+						"friendly_name": "Living Room Light"
+					},
+					"last_changed": "2024-01-01T00:00:00Z",
+					"last_updated": "2024-01-01T00:00:00Z"
+				},
+				{
+					"entity_id": "automation.test_automation_1",
+					"state": "on",
+					"attributes": {
+						"friendly_name": "Test Automation 1",
+						"description": "My test automation",
+						"mode": "single"
+					},
+					"last_changed": "2024-01-01T00:00:00Z",
+					"last_updated": "2024-01-01T00:00:00Z"
+				},
+				{
+					"entity_id": "automation.test_automation_2",
+					"state": "off",
+					"attributes": {
+						"friendly_name": "Test Automation 2"
+					},
+					"last_changed": "2024-01-01T00:00:00Z",
+					"last_updated": "2024-01-01T00:00:00Z"
+				},
+				{
+					"entity_id": "switch.bedroom",
+					"state": "off",
+					"attributes": {
+						"friendly_name": "Bedroom Switch"
+					},
+					"last_changed": "2024-01-01T00:00:00Z",
+					"last_updated": "2024-01-01T00:00:00Z"
+				}
+			]`))
+			return
+		}
+
+		t.Errorf("unexpected path: %s", r.URL.Path)
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	client, _ := New(WithBaseURL(server.URL), WithToken("test-token"))
+	ctx := context.Background()
+
+	configs, err := client.AutomationList(ctx)
+	if err != nil {
+		t.Fatalf("AutomationList() error = %v", err)
+	}
+
+	// Should only return automation.* entities (2), not light or switch
+	if len(configs) != 2 {
+		t.Errorf("expected 2 configs, got %d", len(configs))
+	}
+
+	// Verify first automation
+	if configs[0].ID != "automation.test_automation_1" {
+		t.Errorf("expected id automation.test_automation_1, got %s", configs[0].ID)
+	}
+	if configs[0].Alias != "Test Automation 1" {
+		t.Errorf("expected alias 'Test Automation 1', got %s", configs[0].Alias)
+	}
+	if configs[0].Description == nil || *configs[0].Description != "My test automation" {
+		t.Error("expected description 'My test automation'")
+	}
+	if configs[0].Mode != "single" {
+		t.Errorf("expected mode 'single', got %s", configs[0].Mode)
+	}
+
+	// Verify second automation
+	if configs[1].ID != "automation.test_automation_2" {
+		t.Errorf("expected id automation.test_automation_2, got %s", configs[1].ID)
+	}
+	if configs[1].Alias != "Test Automation 2" {
+		t.Errorf("expected alias 'Test Automation 2', got %s", configs[1].Alias)
+	}
+
+	// In fallback mode, trigger/action arrays should be empty (not nil)
+	if configs[0].Trigger == nil || len(configs[0].Trigger) != 0 {
+		t.Error("expected empty trigger array in fallback mode")
+	}
+	if configs[0].Action == nil || len(configs[0].Action) != 0 {
+		t.Error("expected empty action array in fallback mode")
+	}
+}
+
+func TestClient_AutomationList_FallbackNoFriendlyName(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/config/automation/config" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if r.URL.Path == "/api/states" {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`[
+				{
+					"entity_id": "automation.my_automation",
+					"state": "on",
+					"attributes": {},
+					"last_changed": "2024-01-01T00:00:00Z",
+					"last_updated": "2024-01-01T00:00:00Z"
+				}
+			]`))
+			return
+		}
+	}))
+	defer server.Close()
+
+	client, _ := New(WithBaseURL(server.URL), WithToken("test-token"))
+	ctx := context.Background()
+
+	configs, err := client.AutomationList(ctx)
+	if err != nil {
+		t.Fatalf("AutomationList() error = %v", err)
+	}
+
+	if len(configs) != 1 {
+		t.Fatalf("expected 1 config, got %d", len(configs))
+	}
+
+	// Should use entity_id without "automation." prefix as alias
+	if configs[0].Alias != "my_automation" {
+		t.Errorf("expected alias 'my_automation', got %s", configs[0].Alias)
+	}
+}
+
+func TestClient_AutomationList_BothEndpointsFail(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Both endpoints return errors
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	client, _ := New(WithBaseURL(server.URL), WithToken("test-token"))
+	ctx := context.Background()
+
+	_, err := client.AutomationList(ctx)
+	if err == nil {
+		t.Fatal("expected error when both endpoints fail")
+	}
+
+	// Error should mention both failures
+	errMsg := err.Error()
+	if !strings.Contains(errMsg, "config endpoint failed") {
+		t.Errorf("error should mention config endpoint failure: %v", err)
+	}
+	if !strings.Contains(errMsg, "states fallback also failed") {
+		t.Errorf("error should mention states fallback failure: %v", err)
 	}
 }
 

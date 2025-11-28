@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 // AutomationTriggerRequest contains parameters for triggering an automation.
@@ -112,11 +113,63 @@ func (c *Client) AutomationReload(ctx context.Context) error {
 //
 // WARNING: This uses an undocumented REST API endpoint (/api/config/automation/config)
 // that is subject to change. See AutomationConfig for details.
+//
+// Implementation notes:
+// - First attempts the undocumented /api/config/automation/config endpoint
+// - If that fails (common 404 error), falls back to listing automation entities via /api/states
+// - Fallback mode returns only basic metadata (ID, Alias) without triggers/actions/conditions
+// - Only returns UI-created automations stored in automations.yaml, not YAML-defined ones
 func (c *Client) AutomationList(ctx context.Context) ([]AutomationConfig, error) {
+	// Try the undocumented config endpoint first
 	var configs []AutomationConfig
-	if err := c.doJSON(ctx, http.MethodGet, "/api/config/automation/config", nil, &configs); err != nil {
-		return nil, fmt.Errorf("automation list: %w", err)
+	err := c.doJSON(ctx, http.MethodGet, "/api/config/automation/config", nil, &configs)
+	if err == nil {
+		return configs, nil
 	}
+
+	// If config endpoint fails (common 404), fall back to States API
+	// This is documented and reliable but returns less detailed information
+	states, statesErr := c.States(ctx)
+	if statesErr != nil {
+		// Return original error if both methods fail
+		return nil, fmt.Errorf("automation list: config endpoint failed (%w), states fallback also failed (%v)", err, statesErr)
+	}
+
+	// Filter for automation.* entities and build basic configs
+	configs = make([]AutomationConfig, 0)
+	for _, state := range states {
+		if !strings.HasPrefix(state.EntityID, "automation.") {
+			continue
+		}
+
+		config := AutomationConfig{
+			ID: state.EntityID,
+		}
+
+		// Extract friendly_name as alias if available
+		if friendlyName, ok := state.Attributes["friendly_name"].(string); ok {
+			config.Alias = friendlyName
+		} else {
+			// Fallback: use entity_id without "automation." prefix
+			config.Alias = strings.TrimPrefix(state.EntityID, "automation.")
+		}
+
+		// Extract other attributes if available
+		if desc, ok := state.Attributes["description"].(string); ok && desc != "" {
+			config.Description = &desc
+		}
+		if mode, ok := state.Attributes["mode"].(string); ok && mode != "" {
+			config.Mode = mode
+		}
+
+		// Note: Trigger, Condition, Action will be empty in fallback mode
+		// Users need to call AutomationGet(id) for full configuration
+		config.Trigger = []any{}
+		config.Action = []any{}
+
+		configs = append(configs, config)
+	}
+
 	return configs, nil
 }
 
