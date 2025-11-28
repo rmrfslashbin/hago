@@ -109,9 +109,18 @@ err = client.AutomationReload(ctx)
 
 ```go
 // List all automation configurations
+// Note: Falls back to States API if config endpoint unavailable (common 404 error)
+// Fallback mode returns basic metadata only (ID, Alias) without triggers/actions
 configs, err := client.AutomationList(ctx)
 for _, config := range configs {
     fmt.Printf("%s: %s\n", config.ID, config.Alias)
+
+    // In fallback mode, trigger/action arrays will be empty
+    // Call AutomationGet(id) to fetch full configuration if needed
+    if len(config.Trigger) == 0 {
+        fullConfig, _ := client.AutomationGet(ctx, config.ID)
+        // fullConfig contains complete trigger/action/condition data
+    }
 }
 
 // Get a specific automation configuration
