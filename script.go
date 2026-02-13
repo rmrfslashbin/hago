@@ -121,8 +121,35 @@ func (c *Client) ScriptSave(ctx context.Context, config *ScriptConfig) error {
 		return fmt.Errorf("script sequence is required")
 	}
 
+	// Build payload without ID (ID goes in URL path only)
+	// Home Assistant API rejects 'id' field in request body
+	payload := map[string]any{
+		"alias":    config.Alias,
+		"sequence": config.Sequence,
+	}
+
+	// Add optional fields only if set
+	if config.Mode != "" {
+		payload["mode"] = config.Mode
+	}
+	if config.Max != nil {
+		payload["max"] = *config.Max
+	}
+	if config.Icon != nil {
+		payload["icon"] = *config.Icon
+	}
+	if config.Description != nil {
+		payload["description"] = *config.Description
+	}
+	if len(config.Fields) > 0 {
+		payload["fields"] = config.Fields
+	}
+	if len(config.Variables) > 0 {
+		payload["variables"] = config.Variables
+	}
+
 	path := fmt.Sprintf("/api/config/script/config/%s", config.ID)
-	if err := c.doJSON(ctx, http.MethodPost, path, config, nil); err != nil {
+	if err := c.doJSON(ctx, http.MethodPost, path, payload, nil); err != nil {
 		return fmt.Errorf("script save: %w", err)
 	}
 	return nil
