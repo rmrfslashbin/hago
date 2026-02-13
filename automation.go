@@ -203,8 +203,33 @@ func (c *Client) AutomationSave(ctx context.Context, config *AutomationConfig) e
 		return fmt.Errorf("automation alias is required")
 	}
 
+	// Build payload without ID (ID goes in URL path only)
+	// Home Assistant API rejects 'id' field in request body
+	payload := map[string]any{
+		"alias":   config.Alias,
+		"trigger": config.Trigger,
+		"action":  config.Action,
+	}
+
+	// Add optional fields only if set
+	if config.Description != nil {
+		payload["description"] = *config.Description
+	}
+	if config.Mode != "" {
+		payload["mode"] = config.Mode
+	}
+	if config.MaxExceeded != nil {
+		payload["max_exceeded"] = *config.MaxExceeded
+	}
+	if config.Max != nil {
+		payload["max"] = *config.Max
+	}
+	if len(config.Condition) > 0 {
+		payload["condition"] = config.Condition
+	}
+
 	path := fmt.Sprintf("/api/config/automation/config/%s", config.ID)
-	if err := c.doJSON(ctx, http.MethodPost, path, config, nil); err != nil {
+	if err := c.doJSON(ctx, http.MethodPost, path, payload, nil); err != nil {
 		return fmt.Errorf("automation save: %w", err)
 	}
 	return nil

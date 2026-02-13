@@ -508,14 +508,23 @@ func TestClient_AutomationSave(t *testing.T) {
 			t.Errorf("expected POST, got %s", r.Method)
 		}
 
-		var config map[string]any
-		json.NewDecoder(r.Body).Decode(&config)
+		var payload map[string]any
+		json.NewDecoder(r.Body).Decode(&payload)
 
-		if config["id"] != "test1" {
-			t.Errorf("expected id test1, got %v", config["id"])
+		// Verify ID is NOT in the payload (only in URL path)
+		if _, hasID := payload["id"]; hasID {
+			t.Errorf("id field should not be in request body, got: %v", payload["id"])
 		}
-		if config["alias"] != "Test Automation" {
-			t.Errorf("expected alias 'Test Automation', got %v", config["alias"])
+
+		// Verify required fields are present
+		if payload["alias"] != "Test Automation" {
+			t.Errorf("expected alias 'Test Automation', got %v", payload["alias"])
+		}
+		if payload["mode"] != "single" {
+			t.Errorf("expected mode 'single', got %v", payload["mode"])
+		}
+		if payload["description"] != "Test description" {
+			t.Errorf("expected description 'Test description', got %v", payload["description"])
 		}
 
 		w.Header().Set("Content-Type", "application/json")
