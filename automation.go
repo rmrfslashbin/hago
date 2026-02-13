@@ -26,9 +26,9 @@ type AutomationConfig struct {
 	Mode        string         `json:"mode,omitempty"`        // single, restart, parallel, queued
 	MaxExceeded *string        `json:"max_exceeded,omitempty"` // warn, silent
 	Max         *int           `json:"max,omitempty"`
-	Trigger     []any          `json:"trigger"`
-	Condition   []any          `json:"condition,omitempty"`
-	Action      []any          `json:"action"`
+	Trigger     []any          `json:"triggers"`              // Home Assistant API uses plural "triggers"
+	Condition   []any          `json:"conditions,omitempty"`  // Home Assistant API uses plural "conditions"
+	Action      []any          `json:"actions"`               // Home Assistant API uses plural "actions"
 }
 
 // AutomationTrigger triggers an automation, optionally skipping conditions.
@@ -205,10 +205,11 @@ func (c *Client) AutomationSave(ctx context.Context, config *AutomationConfig) e
 
 	// Build payload without ID (ID goes in URL path only)
 	// Home Assistant API rejects 'id' field in request body
+	// Note: HA API uses plural field names (triggers, actions, conditions)
 	payload := map[string]any{
-		"alias":   config.Alias,
-		"trigger": config.Trigger,
-		"action":  config.Action,
+		"alias":    config.Alias,
+		"triggers": config.Trigger,
+		"actions":  config.Action,
 	}
 
 	// Add optional fields only if set
@@ -225,7 +226,7 @@ func (c *Client) AutomationSave(ctx context.Context, config *AutomationConfig) e
 		payload["max"] = *config.Max
 	}
 	if len(config.Condition) > 0 {
-		payload["condition"] = config.Condition
+		payload["conditions"] = config.Condition
 	}
 
 	path := fmt.Sprintf("/api/config/automation/config/%s", config.ID)
