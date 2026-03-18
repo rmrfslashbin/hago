@@ -2,10 +2,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -20,6 +22,7 @@ var (
 	Version   = "dev"
 	GitCommit = "unknown"
 	BuildTime = "unknown"
+	RepoURL   = "unknown"
 )
 
 var (
@@ -72,15 +75,38 @@ func init() {
 	viper.BindPFlag("log_format", rootCmd.PersistentFlags().Lookup("log-format"))
 
 	// Version command
-	rootCmd.AddCommand(&cobra.Command{
+	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("hago %s\n", Version)
-			fmt.Printf("  commit:  %s\n", GitCommit)
-			fmt.Printf("  built:   %s\n", BuildTime)
+			jsonOutput, _ := cmd.Flags().GetBool("json")
+			if jsonOutput {
+				info := map[string]string{
+					"version":    Version,
+					"git_commit": GitCommit,
+					"build_time": BuildTime,
+					"repo_url":   RepoURL,
+					"go_version": runtime.Version(),
+					"platform":   fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
+				}
+				enc := json.NewEncoder(os.Stdout)
+				enc.SetIndent("", "  ")
+				if err := enc.Encode(info); err != nil {
+					fmt.Fprintf(os.Stderr, "error encoding JSON: %v\n", err)
+					os.Exit(1)
+				}
+			} else {
+				fmt.Printf("Version:    %s\n", Version)
+				fmt.Printf("Git Commit: %s\n", GitCommit)
+				fmt.Printf("Build Time: %s\n", BuildTime)
+				fmt.Printf("Repository: %s\n", RepoURL)
+				fmt.Printf("Go Version: %s\n", runtime.Version())
+				fmt.Printf("Platform:   %s/%s\n", runtime.GOOS, runtime.GOARCH)
+			}
 		},
-	})
+	}
+	versionCmd.Flags().Bool("json", false, "Output version information as JSON")
+	rootCmd.AddCommand(versionCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.

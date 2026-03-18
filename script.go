@@ -17,7 +17,7 @@ type ScriptConfig struct {
 	ID          string         `json:"id"`
 	Alias       string         `json:"alias"`
 	Sequence    []any          `json:"sequence"`
-	Mode        string         `json:"mode,omitempty"`        // single, restart, parallel, queued
+	Mode        string         `json:"mode,omitempty"` // single, restart, parallel, queued
 	Max         *int           `json:"max,omitempty"`
 	Icon        *string        `json:"icon,omitempty"`
 	Description *string        `json:"description,omitempty"`

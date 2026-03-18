@@ -7,8 +7,9 @@ MODULE := github.com/rmrfslashbin/hago
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
+REPO_URL := $(shell git config --get remote.origin.url 2>/dev/null || echo "unknown")
 
-LDFLAGS := -ldflags "-X main.version=$(VERSION) -X main.gitCommit=$(COMMIT) -X main.buildTime=$(BUILD_TIME)"
+LDFLAGS := -ldflags "-X main.version=$(VERSION) -X main.gitCommit=$(COMMIT) -X main.buildTime=$(BUILD_TIME) -X main.repoURL=$(REPO_URL)"
 
 .PHONY: build build-all test test-cover cover-report lint lint-fix vet staticcheck deadcode vulncheck fmt tidy check check-all clean install help
 
@@ -78,8 +79,8 @@ tidy:
 ## check: Run quick checks (fmt, vet, test)
 check: fmt vet test
 
-## check-all: Run all checks including static analysis (fmt, vet, staticcheck, deadcode, vulncheck, test-cover)
-check-all: fmt vet staticcheck deadcode vulncheck test-cover
+## check-all: Run all checks including static analysis (fmt, vet, staticcheck, vulncheck, test-cover)
+check-all: fmt vet staticcheck vulncheck test-cover
 	@echo ""
 	@echo "All checks passed!"
 

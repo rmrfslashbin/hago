@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          BINARY_NAME=hago
+          OUTPUT=${BINARY_NAME}-${{ matrix.goos }}-${{ matrix.goarch }}
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            OUTPUT=${OUTPUT}.exe
+          fi
+          go build -v -trimpath \
+            -ldflags="-s -w \
+              -X main.version=${{ github.ref_name }} \
+              -X main.gitCommit=${{ github.sha }} \
+              -X main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+              -X main.repoURL=https://github.com/${{ github.repository }}" \
+            -o dist/${OUTPUT} \
+            ./cmd/hago
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hago-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/
+
+  publish:
+    name: Publish Release
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          merge-multiple: true
+
+      - name: Create checksums
+        run: |
+          cd dist
+          sha256sum * > checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+          generate_release_notes: true

@@ -215,7 +215,7 @@ func TestClient_State(t *testing.T) {
 			EntityID: "light.living_room",
 			State:    "on",
 			Attributes: map[string]any{
-				"brightness": 255,
+				"brightness":    255,
 				"friendly_name": "Living Room Light",
 			},
 		})

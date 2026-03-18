@@ -20,26 +20,26 @@ type Dashboard struct {
 // DashboardConfig represents the configuration of a Lovelace dashboard.
 // This is the actual dashboard content with views, cards, etc.
 type DashboardConfig struct {
-	Title      string         `json:"title,omitempty"`
-	Views      []View         `json:"views,omitempty"`
-	Strategy   *Strategy      `json:"strategy,omitempty"`
-	Background string         `json:"background,omitempty"`
+	Title      string    `json:"title,omitempty"`
+	Views      []View    `json:"views,omitempty"`
+	Strategy   *Strategy `json:"strategy,omitempty"`
+	Background string    `json:"background,omitempty"`
 	// Raw holds the full config as received, for pass-through scenarios
 	Raw json.RawMessage `json:"-"`
 }
 
 // View represents a view (tab) in a Lovelace dashboard.
 type View struct {
-	Title      string         `json:"title,omitempty"`
-	Path       string         `json:"path,omitempty"`
-	Icon       string         `json:"icon,omitempty"`
-	Theme      string         `json:"theme,omitempty"`
-	Panel      bool           `json:"panel,omitempty"`
-	Background string         `json:"background,omitempty"`
-	Badges     []any          `json:"badges,omitempty"`
-	Cards      []any          `json:"cards,omitempty"`
-	Subview    bool           `json:"subview,omitempty"`
-	Strategy   *Strategy      `json:"strategy,omitempty"`
+	Title      string    `json:"title,omitempty"`
+	Path       string    `json:"path,omitempty"`
+	Icon       string    `json:"icon,omitempty"`
+	Theme      string    `json:"theme,omitempty"`
+	Panel      bool      `json:"panel,omitempty"`
+	Background string    `json:"background,omitempty"`
+	Badges     []any     `json:"badges,omitempty"`
+	Cards      []any     `json:"cards,omitempty"`
+	Subview    bool      `json:"subview,omitempty"`
+	Strategy   *Strategy `json:"strategy,omitempty"`
 }
 
 // Strategy represents a dashboard or view generation strategy.
@@ -83,9 +83,9 @@ type lovelaceConfigCmd struct {
 
 // lovelaceSaveConfigCmd is the WebSocket command to save a dashboard config.
 type lovelaceSaveConfigCmd struct {
-	Type    string `json:"type"`
+	Type    string  `json:"type"`
 	URLPath *string `json:"url_path,omitempty"`
-	Config  any    `json:"config"`
+	Config  any     `json:"config"`
 }
 
 // lovelaceDeleteConfigCmd is the WebSocket command to delete a dashboard config.
@@ -112,8 +112,8 @@ type lovelaceDashboardsCreateCmd struct {
 
 // lovelaceDashboardsUpdateCmd is the WebSocket command to update a dashboard.
 type lovelaceDashboardsUpdateCmd struct {
-	Type        string `json:"type"`
-	DashboardID string `json:"dashboard_id"`
+	Type            string  `json:"type"`
+	DashboardID     string  `json:"dashboard_id"`
 	Title           *string `json:"title,omitempty"`
 	Icon            *string `json:"icon,omitempty"`
 	ShowInSidebar   *bool   `json:"show_in_sidebar,omitempty"`

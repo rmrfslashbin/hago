@@ -8,6 +8,7 @@ var (
 	version   = "dev"
 	gitCommit = "unknown"
 	buildTime = "unknown"
+	repoURL   = "unknown"
 )
 
 func main() {
@@ -15,6 +16,7 @@ func main() {
 	cmd.Version = version
 	cmd.GitCommit = gitCommit
 	cmd.BuildTime = buildTime
+	cmd.RepoURL = repoURL
 
 	cmd.Execute()
 }

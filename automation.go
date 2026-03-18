@@ -20,15 +20,15 @@ type AutomationTriggerRequest struct {
 // is used internally by the Home Assistant UI but is not officially documented.
 // Use at your own risk and expect potential breaking changes in future HA versions.
 type AutomationConfig struct {
-	ID          string         `json:"id"`
-	Alias       string         `json:"alias"`
-	Description *string        `json:"description,omitempty"`
-	Mode        string         `json:"mode,omitempty"`        // single, restart, parallel, queued
-	MaxExceeded *string        `json:"max_exceeded,omitempty"` // warn, silent
-	Max         *int           `json:"max,omitempty"`
-	Trigger     []any          `json:"triggers"`              // Home Assistant API uses plural "triggers"
-	Condition   []any          `json:"conditions,omitempty"`  // Home Assistant API uses plural "conditions"
-	Action      []any          `json:"actions"`               // Home Assistant API uses plural "actions"
+	ID          string  `json:"id"`
+	Alias       string  `json:"alias"`
+	Description *string `json:"description,omitempty"`
+	Mode        string  `json:"mode,omitempty"`         // single, restart, parallel, queued
+	MaxExceeded *string `json:"max_exceeded,omitempty"` // warn, silent
+	Max         *int    `json:"max,omitempty"`
+	Trigger     []any   `json:"triggers"`             // Home Assistant API uses plural "triggers"
+	Condition   []any   `json:"conditions,omitempty"` // Home Assistant API uses plural "conditions"
+	Action      []any   `json:"actions"`              // Home Assistant API uses plural "actions"
 }
 
 // AutomationTrigger triggers an automation, optionally skipping conditions.

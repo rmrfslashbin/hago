@@ -12,22 +12,22 @@ type StatusResponse struct {
 
 // Config represents the Home Assistant configuration.
 type Config struct {
-	Components      []string `json:"components"`
-	ConfigDir       string   `json:"config_dir"`
-	Elevation       int      `json:"elevation"`
-	Latitude        float64  `json:"latitude"`
-	Longitude       float64  `json:"longitude"`
-	LocationName    string   `json:"location_name"`
-	TimeZone        string   `json:"time_zone"`
-	UnitSystem      UnitSystem `json:"unit_system"`
-	Version         string   `json:"version"`
-	State           string   `json:"state"`
-	ExternalURL     string   `json:"external_url,omitempty"`
-	InternalURL     string   `json:"internal_url,omitempty"`
-	Currency        string   `json:"currency,omitempty"`
-	SafeMode        bool     `json:"safe_mode"`
-	AllowlistExternalDirs []string `json:"allowlist_external_dirs,omitempty"`
-	AllowlistExternalURLs []string `json:"allowlist_external_urls,omitempty"`
+	Components            []string   `json:"components"`
+	ConfigDir             string     `json:"config_dir"`
+	Elevation             int        `json:"elevation"`
+	Latitude              float64    `json:"latitude"`
+	Longitude             float64    `json:"longitude"`
+	LocationName          string     `json:"location_name"`
+	TimeZone              string     `json:"time_zone"`
+	UnitSystem            UnitSystem `json:"unit_system"`
+	Version               string     `json:"version"`
+	State                 string     `json:"state"`
+	ExternalURL           string     `json:"external_url,omitempty"`
+	InternalURL           string     `json:"internal_url,omitempty"`
+	Currency              string     `json:"currency,omitempty"`
+	SafeMode              bool       `json:"safe_mode"`
+	AllowlistExternalDirs []string   `json:"allowlist_external_dirs,omitempty"`
+	AllowlistExternalURLs []string   `json:"allowlist_external_urls,omitempty"`
 }
 
 // UnitSystem represents the unit system configuration.
@@ -43,12 +43,12 @@ type UnitSystem struct {
 
 // State represents the state of an entity.
 type State struct {
-	EntityID    string                 `json:"entity_id"`
-	State       string                 `json:"state"`
-	Attributes  map[string]any         `json:"attributes"`
-	LastChanged time.Time              `json:"last_changed"`
-	LastUpdated time.Time              `json:"last_updated"`
-	Context     Context                `json:"context"`
+	EntityID    string         `json:"entity_id"`
+	State       string         `json:"state"`
+	Attributes  map[string]any `json:"attributes"`
+	LastChanged time.Time      `json:"last_changed"`
+	LastUpdated time.Time      `json:"last_updated"`
+	Context     Context        `json:"context"`
 }
 
 // Context represents the context of a state change.
@@ -81,20 +81,20 @@ type Service struct {
 
 // ServiceDetails contains the details of a specific service.
 type ServiceDetails struct {
-	Name        string                   `json:"name,omitempty"`
-	Description string                   `json:"description,omitempty"`
-	Fields      map[string]ServiceField  `json:"fields,omitempty"`
-	Target      *ServiceTarget           `json:"target,omitempty"`
+	Name        string                  `json:"name,omitempty"`
+	Description string                  `json:"description,omitempty"`
+	Fields      map[string]ServiceField `json:"fields,omitempty"`
+	Target      *ServiceTarget          `json:"target,omitempty"`
 }
 
 // ServiceField represents a field in a service call.
 type ServiceField struct {
-	Name        string      `json:"name,omitempty"`
-	Description string      `json:"description,omitempty"`
-	Required    bool        `json:"required,omitempty"`
-	Example     any         `json:"example,omitempty"`
-	Default     any         `json:"default,omitempty"`
-	Selector    any         `json:"selector,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Required    bool   `json:"required,omitempty"`
+	Example     any    `json:"example,omitempty"`
+	Default     any    `json:"default,omitempty"`
+	Selector    any    `json:"selector,omitempty"`
 }
 
 // ServiceTarget represents the target specification for a service.
@@ -130,11 +130,11 @@ func (s *ServiceCallRequest) MarshalJSON() ([]byte, error) {
 
 // HistoryEntry represents a historical state entry.
 type HistoryEntry struct {
-	EntityID    string    `json:"entity_id"`
-	State       string    `json:"state"`
+	EntityID    string         `json:"entity_id"`
+	State       string         `json:"state"`
 	Attributes  map[string]any `json:"attributes,omitempty"`
-	LastChanged time.Time `json:"last_changed"`
-	LastUpdated time.Time `json:"last_updated"`
+	LastChanged time.Time      `json:"last_changed"`
+	LastUpdated time.Time      `json:"last_updated"`
 }
 
 // HistoryOptions contains options for history queries.
@@ -190,14 +190,14 @@ type Calendar struct {
 
 // CalendarEvent represents an event in a calendar.
 type CalendarEvent struct {
-	Start       string         `json:"start"`
-	End         string         `json:"end"`
-	Summary     string         `json:"summary"`
-	Description string         `json:"description,omitempty"`
-	Location    string         `json:"location,omitempty"`
-	UID         string         `json:"uid,omitempty"`
-	Recurrence  string         `json:"recurrence_id,omitempty"`
-	RRULE       string         `json:"rrule,omitempty"`
+	Start       string `json:"start"`
+	End         string `json:"end"`
+	Summary     string `json:"summary"`
+	Description string `json:"description,omitempty"`
+	Location    string `json:"location,omitempty"`
+	UID         string `json:"uid,omitempty"`
+	Recurrence  string `json:"recurrence_id,omitempty"`
+	RRULE       string `json:"rrule,omitempty"`
 }
 
 // IntentRequest represents a request to handle an intent.
@@ -208,9 +208,9 @@ type IntentRequest struct {
 
 // IntentResponse represents the response from an intent.
 type IntentResponse struct {
-	Speech     SpeechResponse `json:"speech,omitempty"`
-	Card       CardResponse   `json:"card,omitempty"`
-	LanguageCode string       `json:"language,omitempty"`
+	Speech       SpeechResponse `json:"speech,omitempty"`
+	Card         CardResponse   `json:"card,omitempty"`
+	LanguageCode string         `json:"language,omitempty"`
 }
 
 // SpeechResponse represents the speech portion of an intent response.

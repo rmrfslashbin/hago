@@ -33,13 +33,13 @@ type wsAuthMessage struct {
 
 // wsResponse represents a response from Home Assistant.
 type wsResponse struct {
-	ID      int64           `json:"id,omitempty"`
-	Type    string          `json:"type"`
-	Success bool            `json:"success,omitempty"`
-	Result  json.RawMessage `json:"result,omitempty"`
-	Error   *wsError        `json:"error,omitempty"`
-	HAVersion string        `json:"ha_version,omitempty"`
-	Message   string        `json:"message,omitempty"`
+	ID        int64           `json:"id,omitempty"`
+	Type      string          `json:"type"`
+	Success   bool            `json:"success,omitempty"`
+	Result    json.RawMessage `json:"result,omitempty"`
+	Error     *wsError        `json:"error,omitempty"`
+	HAVersion string          `json:"ha_version,omitempty"`
+	Message   string          `json:"message,omitempty"`
 }
 
 // wsError represents an error from Home Assistant.
