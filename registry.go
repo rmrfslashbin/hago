@@ -31,7 +31,7 @@ type DeviceRegistryEntry struct {
 	ConfigEntries    []string   `json:"config_entries"`
 	Connections      [][]string `json:"connections"`
 	DisabledBy       *string    `json:"disabled_by"`
-	Identifiers      [][]string `json:"identifiers"`
+	Identifiers      [][]any    `json:"identifiers"`
 	Manufacturer     *string    `json:"manufacturer"`
 	Model            *string    `json:"model"`
 	NameByUser       *string    `json:"name_by_user"`
